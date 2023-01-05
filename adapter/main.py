@@ -16,27 +16,48 @@ def on_message(client, userdata, msg):
     print(f'Received a message by topic [{topic}]', flush=True)
 
     log_msg = ''
+    data_timestamp = ''
+    location, station = topic.split('/')
 
     if 'timestamp' in payload:
-        timestampVal = payload['timestamp']
-        print(f'Data timestamp is: {timestampVal}', flush=True)
+        data_timestamp = payload['timestamp']
+        print(f'Data timestamp is: {data_timestamp}', flush=True)
     else:
+        data_timestamp = datetime.now().strftime('%Y-%M-%d %H:%M:%S')
         print('Data timestamp is NOW', flush=True)
 
     for key in payload:
-        log_msg = datetime.now().strftime('%Y-%M-%d %H:%M:%S') + ' '
-        log_msg += topic.replace('/', '.') + '.'
+        log_msg = data_timestamp + ' '
+        log_msg += f'{location}.{station}.'
+
+        data = []
 
         if isinstance(payload[key], int) or isinstance(payload[key], float):
             log_msg += key + ' ' + str(payload[key])
+            data.append(
+                {
+                    "measurement": f'{station}.{key}',
+                    "tags" : {
+                        "location" : location,
+                        "station" : station
+                    },
+                    "fields": {
+                        "value" : float(payload[key])
+                    },
+                    "timestamp" : data_timestamp
+                }
+            )
             print(log_msg, flush=True)
+
+            influxClient.write_points(data)
 
 
 def main():
     time.sleep(10)
     global client
-    # create influxDB table
-    influxClient.create_database('iot_data')
+        # check if db exists
+    if len(list(filter(lambda x: x['name'] == "iot_data", influxClient.get_list_database()))) == 0:
+        influxClient.create_database("iot_data")
     influxClient.switch_database('iot_data')
 
     print('Connected to InfluxDB', flush=True)
