@@ -12,15 +12,26 @@ services:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
 
   adapter:
+    image: adapter
     depends_on:
       - mqtt
+      - influxdb
     build:
       context: ./adapter
     networks:
       - mqtt-network
+      - db-network
     restart: always
-    image: adapter
     command: ["python3", "-u", "main.py"]
+
+  influxdb:
+    image: influxdb:latest
+    networks:
+      - db-network
+    restart: always
+    # volumes:
+
 
 networks:
   mqtt-network:
+  db-network:
