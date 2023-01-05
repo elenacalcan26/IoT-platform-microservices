@@ -33,9 +33,13 @@ services:
     networks:
       - db-network
     restart: always
-    # volumes:
+    volumes:
+      - influxdb:/var/lib/influxdb
 
 
 networks:
   mqtt-network:
   db-network:
+
+volumes:
+  influxdb:
