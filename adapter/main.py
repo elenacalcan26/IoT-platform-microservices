@@ -3,17 +3,24 @@ from influxdb import InfluxDBClient
 import time
 import json
 from datetime import datetime
+import os
 
 influxClient = InfluxDBClient('influxdb', 8086)
 
+def logging(msg):
+    debug = os.getenv('DEBUG_DATA_FLOW')
+    if debug:
+        print(msg, flush=True)
+
+
 def on_connect(client, userdata, flags, rc):
-    print('Connected with the result code ' + str(rc), flush=True)
+    logging(f'Connected with the result code {rc}')
     client.subscribe('#')
 
 def on_message(client, userdata, msg):
     topic = msg.topic
     payload = json.loads(msg.payload)
-    print(f'Received a message by topic [{topic}]', flush=True)
+    logging(f'Received a message by topic [{topic}]')
 
     log_msg = ''
     data_timestamp = ''
@@ -21,10 +28,10 @@ def on_message(client, userdata, msg):
 
     if 'timestamp' in payload:
         data_timestamp = payload['timestamp']
-        print(f'Data timestamp is: {data_timestamp}', flush=True)
+        logging(f'Data timestamp is: {data_timestamp}')
     else:
         data_timestamp = datetime.now().strftime('%Y-%M-%d %H:%M:%S')
-        print('Data timestamp is NOW', flush=True)
+        logging('Data timestamp is NOW')
 
     for key in payload:
         log_msg = data_timestamp + ' '
@@ -47,22 +54,21 @@ def on_message(client, userdata, msg):
                     "timestamp" : data_timestamp
                 }
             )
-            print(log_msg, flush=True)
 
             influxClient.write_points(data)
+            logging(log_msg)
 
 
 def main():
     time.sleep(10)
     global client
-        # check if db exists
+
     if len(list(filter(lambda x: x['name'] == "iot_data", influxClient.get_list_database()))) == 0:
         influxClient.create_database("iot_data")
     influxClient.switch_database('iot_data')
 
-    print('Connected to InfluxDB', flush=True)
+    logging('Connected to InfluxDB')
 
-    # create mqtt client
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_message = on_message

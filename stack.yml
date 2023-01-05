@@ -18,6 +18,8 @@ services:
       - influxdb
     build:
       context: ./adapter
+    environment:
+      - DEBUG_DATA_FLOW=True
     networks:
       - mqtt-network
       - db-network
