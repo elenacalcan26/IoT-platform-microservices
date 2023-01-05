@@ -2,6 +2,7 @@ import paho.mqtt.client as mqtt
 from influxdb import InfluxDBClient
 import time
 import json
+from datetime import datetime
 
 influxClient = InfluxDBClient('influxdb', 8086)
 
@@ -10,18 +11,37 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe('#')
 
 def on_message(client, userdata, msg):
-    # print(msg.topic+" "+str(msg.payload), flush=True)
     topic = msg.topic
     payload = json.loads(msg.payload)
     print(f'Received a message by topic [{topic}]', flush=True)
 
-    pass
+    log_msg = ''
+
+    if 'timestamp' in payload:
+        timestampVal = payload['timestamp']
+        print(f'Data timestamp is: {timestampVal}', flush=True)
+    else:
+        print('Data timestamp is NOW', flush=True)
+
+    for key in payload:
+        log_msg = datetime.now().strftime('%Y-%M-%d %H:%M:%S') + ' '
+        log_msg += topic.replace('/', '.') + '.'
+
+        if isinstance(payload[key], int) or isinstance(payload[key], float):
+            log_msg += key + ' ' + str(payload[key])
+            print(log_msg, flush=True)
 
 
 def main():
     time.sleep(10)
     global client
+    # create influxDB table
+    influxClient.create_database('iot_data')
+    influxClient.switch_database('iot_data')
 
+    print('Connected to InfluxDB', flush=True)
+
+    # create mqtt client
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_message = on_message
