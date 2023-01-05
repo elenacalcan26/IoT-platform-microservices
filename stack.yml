@@ -25,7 +25,9 @@ services:
     command: ["python3", "-u", "main.py"]
 
   influxdb:
-    image: influxdb:latest
+    image: influxdb:1.8
+    ports:
+      - 8086:8086
     networks:
       - db-network
     restart: always
