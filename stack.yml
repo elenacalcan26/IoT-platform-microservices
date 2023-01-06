@@ -32,14 +32,31 @@ services:
       - 8086:8086
     networks:
       - db-network
+      - grafana-network
     restart: always
     volumes:
       - influxdb:/var/lib/influxdb
 
+  grafana:
+    image: grafana/grafana:latest
+    depends_on:
+      - influxdb
+    networks:
+      - grafana-network
+    ports:
+      - 80:3000
+    environment:
+      - GF_SECURITY_ADMIN_USER=asistent
+      - GF_SECURITY_ADMIN_PASSWORD=grafanaSPRC2021
+    restart: always
+    volumes:
+      - grafana-provisioning:/var/lib/grafana
 
 networks:
   mqtt-network:
   db-network:
+  grafana-network:
 
 volumes:
   influxdb:
+  grafana-provisioning:
