@@ -50,7 +50,8 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=grafanaSPRC2021
     restart: always
     volumes:
-      - grafana-provisioning:/var/lib/grafana
+      - grafana-storage:/var/lib/grafana
+      - ./grafana:/etc/grafana/provisioning
 
 networks:
   mqtt-network:
@@ -59,4 +60,4 @@ networks:
 
 volumes:
   influxdb:
-  grafana-provisioning:
+  grafana-storage:
